@@ -1,0 +1,1 @@
+ExternalSettings.SomeValue = 6.18
