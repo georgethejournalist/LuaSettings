@@ -6,16 +6,16 @@ using Neo.IronLua;
 
 namespace NeoLuaTester
 {
+    /// <summary>
+    /// An example class for storing some application-relevant settings. All you need is the SettingsAttribute with a specified key.
+    /// </summary>
     [Settings("ExampleGUISettings")]
     public class ExampleGUISettings
     {
-        [LuaMember("Height")]
         public double Height { get; set; }
 
-        [LuaMember(nameof(Width))]
         public double Width { get; set; }
 
-        // the lua environment is dynamic, so this member does not even need an attribute
         public int Size { get; set; }
     }
 
@@ -26,55 +26,17 @@ namespace NeoLuaTester
             var settingsManager = new SettingsManager("../../../../Config");
             settingsManager.LoadSettings();
 
+            // this is how you can get a settings section from the manager - if no such section is found, it will throw
+            // notice the safe cast, the manager only handles the types dynamically and stores them internally as an object ref
             var externalSettings = settingsManager.GetSettingsSection("ExternalSettings") as ExternalSettings;
+
+            // non-throwing way of getting a settings section - the section in this example does not exist and will not be found
             bool foundSettings = settingsManager.TryGetSettingsSection("NonExistentSettings", out object thisWillBeNull);
 
-
-            //using (var lua = new Lua())
-            //{
-            //    dynamic g = lua.CreateEnvironment<LuaGlobal>();
-
-            //    // create C# instance
-            //    var settingsInstance = new BSceneGUISettings();
-            //    // set global variable as ref to our C# instance
-            //    g.BSceneGUISettings = settingsInstance;
-
-            //    // compile the lua chunk
-            //    var chunk = lua.CompileChunk(ConfigTest, "test.lua",
-            //        new LuaCompileOptions() {DebugEngine = new LuaTraceLineDebugger()});
-
-            //    try
-            //    {
-            //        // actually run the chunk
-            //        g.dochunk(chunk);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Console.WriteLine("Expception: {0}", e.Message);
-            //        var d = LuaExceptionData.GetData(e); // get stack trace
-            //        Console.WriteLine("StackTrace: {0}", d.FormatStackTrace(0, false));
-            //    }
-
-            //    // the C# instance will be filled here
-            //    Console.WriteLine($"BSceneGUISettings from LUA: Width: {settingsInstance.Width}, Height: {settingsInstance.Height}");
-            //}
-
+            // another settings section - see the relevant config file for more details on how this example is different
+            var renderSettings = settingsManager.GetSettingsSection("RenderSettings") as RenderSettings;
 
             Console.ReadLine();
         }
-
-        private static void Print(object[] texts)
-        {
-            foreach (object o in texts)
-                Console.Write(o);
-            Console.WriteLine();
-        } // proc Print
-
-        private static string Read(string sLabel)
-        {
-            Console.Write(sLabel);
-            Console.Write(": ");
-            return Console.ReadLine();
-        } // func Read	
     }
 }
