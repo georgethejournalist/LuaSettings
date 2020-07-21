@@ -6,6 +6,12 @@ A C# library using NeoLua (https://github.com/neolithos/neolua) for easy handlin
 
 LuaSettings is a library that allows you represent any C# classes as 'settings sections' that are then easily obtainable from Lua files.
 
+## Features
+
+- Loads lua files with settings; 
+- Automatically creates C# instances of settings classes (any class with `SettingsAttribute` );
+- Populates these instances with data from lua files.
+
 ## Intended purpose
 
 LuaSettings can be added to any C# project where you require easily obtainable and human-readable (and editable) application settings, which are scriptable. (This sounds like a mouthful, but once you try using lua for your config files, you won't want to go back to XAML.)
