@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using Neo.IronLua;
 
 namespace LuaSettings
@@ -13,7 +14,6 @@ namespace LuaSettings
         private string _pathToConfigFolder;
         private string _mainSettingsFileName;
 
-        private List<Type> _attributedTypes = new List<Type>();
         private Dictionary<Type, SettingsAttribute> _typesWithAttributes = new Dictionary<Type, SettingsAttribute>();
         private Dictionary<string, object> _settingsInstances = new Dictionary<string, object>();
 
@@ -27,11 +27,7 @@ namespace LuaSettings
 
         private void CollectAttributedSettingsClasses()
         {
-            //var callingAssembly = Assembly.GetEntryAssembly()?.FullName;
             var attributeFinder = new AttributeFinder();
-            var settingsClasses = attributeFinder.GetTypesWith<SettingsAttribute>(false);
-            _attributedTypes = settingsClasses.ToList();
-
             var typesAttributePairs = attributeFinder.GetTypesAndAttributesWith<SettingsAttribute>(false);
             _typesWithAttributes = typesAttributePairs.ToDictionary(x => x.Key, x => x.Value);
         }
@@ -81,17 +77,15 @@ namespace LuaSettings
             var originalDirectory = Directory.GetCurrentDirectory();
             Directory.SetCurrentDirectory(_pathToConfigFolder);
 
+            bool success = true;
+
             try
             {
                 using (var lua = new Lua())
                 {
                     dynamic g = lua.CreateEnvironment<LuaGlobal>();
 
-                    // for each type that we found
-                    // create a C# instance
-                    // feed it into the global lua context
-                    // then run the lua chunk
-                    // afterwards retrieve?
+                    // each found type has its instance created in lua context as a table - this populates the tables with default values, if any are set
                     foreach (var typeAttributePair in _typesWithAttributes)
                     {
                         var type = typeAttributePair.Key;
@@ -99,16 +93,13 @@ namespace LuaSettings
                         var attribute = typeAttributePair.Value;
                         var keyFromAttribute = attribute.Key;
 
-                        g[keyFromAttribute] = instance;
+                        var json = JsonSerializer.Serialize(instance, type);
+                        var table = LuaTable.FromJson(json);
+
+                        g[keyFromAttribute] = table;
                         _settingsInstances.Add(keyFromAttribute, instance);
                     }
 
-
-
-                    // create C# instance
-                    //var settingsInstance = new BSceneGUISettings();
-                    // set global variable as ref to our C# instance
-                    //g.BSceneGUISettings = settingsInstance;
 
                     LuaChunk chunk;
                     // compile the lua chunk
@@ -118,6 +109,7 @@ namespace LuaSettings
                     }
                     catch (LuaParseException e)
                     {
+                        success = false;
                         Console.WriteLine($"Exception caught when parsing the lua file at line {e.Line}, column {e.Column}, source file {e.FileName}. Exception: {e}");
                         throw;
                     }
@@ -130,26 +122,39 @@ namespace LuaSettings
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Exception: {0}", e.Message);
+                        success = false;
+                        Console.WriteLine($"Exception {e}");
                         var d = LuaExceptionData.GetData(e); // get stack trace
-                        Console.WriteLine("StackTrace: {0}", d.FormatStackTrace(0, false));
+                        Console.WriteLine($"StackTrace: {d.FormatStackTrace(0, false)}");
+                        throw;
                     }
 
-                    foreach (var instance in _settingsInstances)
+                    // getting actual C# object representations back from the lua tables
+                    var count = _settingsInstances.Count;
+                    for (int index = 0; index < count; index++)
                     {
-                        Console.WriteLine($"Found instance {instance.Key} with value {instance.Value}");
+                        var instancePair = _settingsInstances.ElementAt(index);
+                        
+                        // key under which the settings section has been registered
+                        var key = instancePair.Key;
+                        // the table filled with data from lua
+                        var dynamicTable = g[key];
+                        // the type of the C# object representing the settings section (needed for deserialization)
+                        var typeToCreate = _typesWithAttributes.FirstOrDefault(p => p.Value.Key == key).Key;
+                        // convert table to json
+                        string instanceAsJson = LuaTable.ToJson(dynamicTable);
+                        // deserialize json to our type
+                        var deserializedInstance = JsonSerializer.Deserialize(instanceAsJson, typeToCreate);
+                        // store this instance
+                        _settingsInstances[key] = deserializedInstance;
                     }
-                    // the C# instance will be filled here
-                    //Console.WriteLine($"BSceneGUISettings from LUA: Width: {settingsInstance.Width}, Height: {settingsInstance.Height}");
                 }
             }
             finally
             {
                 Directory.SetCurrentDirectory(originalDirectory);
+                Console.WriteLine(success ? "Settings loaded successfully" : "Problem occurred when loading settings");
             }
-            
-
-            Console.WriteLine("Testing the collection");
         }
 
 
