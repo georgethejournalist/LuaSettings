@@ -1,0 +1,2 @@
+-- empty config file is still valid lua
+-- you could use this section to set values for your loggers, for example
