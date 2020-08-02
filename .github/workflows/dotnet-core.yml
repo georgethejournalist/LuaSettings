@@ -24,6 +24,11 @@ jobs:
       run: dotnet build LuaSettings --configuration Release --no-restore
     - name: Test
       run: dotnet test LuaSettings --no-restore --verbosity normal
+    - name: generate-changelog-action
+      uses: ScottBrenner/generate-changelog-action@1.0.0
+      id: Changelog
+      env:
+        REPO: ${{ github.repository }}
     - name: Create a Release
       uses: actions/create-release@v1
       
@@ -33,8 +38,6 @@ jobs:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
         body: |
-          Changes in this Release
-          - First Change
-          - Second Change
+            ${{ steps.Changelog.outputs.changelog }}
         draft: false
         prerelease: false
