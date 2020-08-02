@@ -29,10 +29,12 @@ jobs:
       id: Changelog
       env:
         REPO: ${{ github.repository }}
-    - name: Create a Release
-      uses: actions/create-release@v1
+    - name: Release
+      uses: fnkr/github-action-ghr@v1
       
       env:
+        GHR_COMPRESS: zip
+        GHR_PATH: bin/
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
         tag_name: ${{ github.ref }}
