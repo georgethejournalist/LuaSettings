@@ -23,3 +23,6 @@ jobs:
       run: dotnet build LuaSettings --configuration Release --no-restore
     - name: Test
       run: dotnet test LuaSettings --no-restore --verbosity normal
+    - name: Create a Release
+      uses: actions/create-release@v1
+
