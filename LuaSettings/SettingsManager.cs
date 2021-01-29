@@ -32,6 +32,40 @@ namespace LuaSettings
             _typesWithAttributes = typesAttributePairs.ToDictionary(x => x.Key, x => x.Value);
         }
 
+        public bool TryGetSettingsSection<T>(string key, out T settingsSection) where T: class
+        {
+	        settingsSection = null;
+	        if (_settingsInstances.ContainsKey(key))
+	        {
+		        settingsSection = _settingsInstances[key] as T;
+		        return true;
+	        }
+
+	        return false;
+        }
+
+        /// <summary>
+        /// Gets the setting section with the specified key, if available, and safe casts to the generic parameter. Throws if the settings section was not found.
+        /// </summary>
+        /// <param name="key">The key of the settings section - the name of the lua table.</param>
+        /// <returns></returns>
+        /// <exception cref="LuaSettingsNotFoundException">Throws if the settings not found.</exception>
+        public T GetSettingsSection<T>(string key) where T: class
+        {
+	        if (_settingsInstances.ContainsKey(key))
+	        {
+		        return _settingsInstances[key] as T;
+	        }
+
+	        throw new LuaSettingsNotFoundException(key, $"Configuration section under the key {key} was not found");
+        }
+
+        /// <summary>
+        /// Gets the setting section with the specified key, if available. Throws if the settings section was not found.
+        /// </summary>
+        /// <param name="key">The key of the settings section - the name of the lua table.</param>
+        /// <returns></returns>
+        /// <exception cref="LuaSettingsNotFoundException">Throws if the settings not found.</exception>
         public object GetSettingsSection(string key)
         {
             if (_settingsInstances.ContainsKey(key))
