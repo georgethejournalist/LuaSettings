@@ -1,0 +1,37 @@
+name: .NET 4.6
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 4.6.x
+    - name: Restore dependencies
+      run: dotnet restore LuaSettings
+    - name: Build
+      run: dotnet build LuaSettings --configuration Release --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: generate-changelog-action
+      uses: ScottBrenner/generate-changelog-action@1.0.0
+      id: Changelog
+      env:
+        REPO: ${{ github.repository }}
+    - name: Release
+      uses: fnkr/github-action-ghr@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GHR_COMPRESS: zip
+        GHR_PATH: bin/
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
