@@ -13,8 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Clean Workspace
-      uses: AutoModality/action-clean@v1.1.0
+    - name: Clean workspace
+      run: dotnet clean --configuration Release
     - name: Restore dependencies
       run: dotnet restore LuaSettings
     - name: Build
