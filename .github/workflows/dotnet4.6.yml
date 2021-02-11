@@ -9,18 +9,22 @@ on:
 jobs:
   build:
 
-    runs-on: windows-latest
+    runs-on: [windows-latest]
 
     steps:
     - uses: actions/checkout@v2
-    - name: Clean workspace
-      run: dotnet clean LuaSettings --configuration Release
-    - name: Restore dependencies
-      run: dotnet restore LuaSettings
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
+      
+    - name: Setup NuGet.exe
+      uses: NuGet/setup-nuget@v1.0.2
+      
+    - name: Restore NuGet packages
+      run: nuget restore LuaSettings.sln
+      
     - name: Build
-      run: dotnet build LuaSettings --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: msbuild LuaSettings.sln /p:Configuration=Release
+      
     - name: generate-changelog-action
       uses: ScottBrenner/generate-changelog-action@1.0.0
       id: Changelog
