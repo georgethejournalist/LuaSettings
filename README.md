@@ -1,5 +1,7 @@
 # LuaSettings
 
+![.NET 4.6](https://github.com/georgethejournalist/LuaSettings/workflows/.NET%204.6/badge.svg?branch=master)
+
 A C# library using NeoLua (https://github.com/neolithos/neolua) for easy handling of configuration files in Lua using a single attribute. Useful for any application settings where you don't want to bind yourself with the rigid structure of XAMLs, inability to add comments (looking at you, JSON) or just plain old want your settings to be scriptable.
 
 ## What it is
